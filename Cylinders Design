@@ -1,0 +1,65 @@
+import FreeCAD as App
+import Part
+import math as m
+from FreeCAD import Base, Gui
+import time as t
+
+# Create a new document
+doc = App.newDocument("cylinders")
+
+# Parameters
+num_cylinders = 36  # Number of cylinders in the circle
+radius = 50  # Radius of the circular pattern
+cylinder_radius = 2  # Radius of each cylinder
+cylinder_height = 10  # Height of each cylinder
+cylinders = []
+
+# Create a circular pattern of cylinders
+for i in range(num_cylinders):
+    # Calculate the angle for each cylinder
+    angle = m.radians(i * (360 / num_cylinders))
+    
+    # Calculate the position of the cylinder
+    x = radius * m.cos(angle)
+    y = radius * m.sin(angle)
+    z = 0
+    
+    # Create a cylinder
+    cylinder = Part.makeCylinder(cylinder_radius, cylinder_height, Base.Vector(x, y, z), Base.Vector(0, 0, 1))
+    
+    # Add the cylinder to the document
+    cylinder_obj = doc.addObject("Part::Feature", f"Cylinder_{i}")
+    cylinder_obj.Shape = cylinder
+    
+    # Set the color based on the angle
+    colour = (m.sin(angle) * 0.5 + 0.5, m.cos(angle) * 0.5 + 0.5, 0.5) 
+    cylinder_obj.ViewObject.ShapeColor = colour
+    
+    # Add the cylinder object to the list
+    cylinders.append(cylinder_obj)
+
+# Recompute the document to update the changes
+doc.recompute()
+# Fit the view to the objects
+Gui.SendMsgToActiveView("ViewFit")
+
+# Animate waves
+wave_speed = 5
+frames = 120
+for frame in range(frames):
+    time_offset = frame * 0.1
+    for i, cylinder in enumerate(cylinders):
+        # Calculate the angle for each cylinder
+        angle = m.radians(i * (360 / num_cylinders))
+        
+        # Calculate wave height
+        height = 5 * m.sin(angle - time_offset) * m.exp(-radius / 10)
+        height += 3 * m.sin(angle / 2 - time_offset)
+        
+        # Update cylinder height
+        cylinder.Placement.Base.z = height
+    
+    # Recompute the document to update the changes
+    doc.recompute()
+    # Pause for animation effect
+    t.sleep(0.05)
